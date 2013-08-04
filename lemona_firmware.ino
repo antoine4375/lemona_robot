@@ -1,4 +1,5 @@
 #include "DCDM1210.h"
+#include "RobotSerialComm.h"
 
 int r_count=0;
 int l_count=0;
@@ -13,9 +14,13 @@ int L_direction=2;
 #define LEAD_A 1
 #define LEAD_B 2
 #define DISTANCE_MOTER 12.25    // mm
+
+#define ROBOT_ID
  
 HardwareTimer timer(2);
 DCDM1210 driver;
+RobotSerialComm port;
+int voltage;
  
 double r_desired_velocity = 0; // 목표 속도 설정
 double r_currently_velocity;
@@ -28,6 +33,14 @@ double I=0;
 double r_input,l_input;
  
 int r_way,l_way;
+
+void sendRobotInfo(){   
+    unsigned int reply_arg[3];
+    driver.Answer_voltage(&voltage);
+    reply_arg[0] = voltage;
+    reply_arg[1] = (int)1;                // Robot ID
+    port.reply(ROBOT_INFO, reply_arg, 2);
+}
  
 void setup() {
   //Initialize Serial3
@@ -58,6 +71,8 @@ int r_control=0,l_control=0;
 void loop() {
   int line;
   int ang;
+  
+
   reset_array();
  
   number = SerialUSB.available();
@@ -67,13 +82,13 @@ void loop() {
     SerialUSB.read(data,number);
     SerialUSB.print(data);
 
-    driver.Moter_control(RIGHT,FORWARD,);
-    //r_desired_velocity = atof(data);
-    //l_desired_velocity = atof(data);
+    driver.Moter_control(RIGHT,FORWARD,atol(data));
+    
+
+    SerialUSB.print(voltage);
  
     if(data[0] == 0x01)
     {
-
       line = data[3] & 0xff;
       ang = data[5] & 0xff;
 

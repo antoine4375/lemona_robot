@@ -8,6 +8,17 @@
 #include "math.h"
 #include <stdlib.h>
 
+DCDM1210::DCDM1210()
+{
+  Reset_data();
+  _Serial_choice = 0;
+  _baud = 0;
+}
+DCDM1210::~DCDM1210()
+{
+
+}
+
 void DCDM1210::Serial_connect(int Serial_choice,int baud)
 {
   switch(baud)
@@ -79,7 +90,7 @@ int DCDM1210::Moter_control(int which, int direction ,int duty)
     _data[4] = duty + 0x30;
     _data[5] = '>';
   }
-
+  Send_data(_data);
   return 1;
 }
 
@@ -175,6 +186,8 @@ int DCDM1210::Moter_control(int which_1, int direction_1 ,int duty_1,int which_2
     array_count++;
   }
   _data[array_count] = '>';
+
+  Send_data(_data);
 
   return 1;
 }
@@ -311,7 +324,6 @@ int DCDM1210::Moter_delay(int usec)
 
 int DCDM1210::Answer_PWM(int *R_direction,int *R_PWM,int *L_direction,int *L_PWM)
 {
-  char data[20];
   int count=0;
   int input_count=0;
 
@@ -324,88 +336,41 @@ int DCDM1210::Answer_PWM(int *R_direction,int *R_PWM,int *L_direction,int *L_PWM
 
   // Send_data
   Send_data(_data);
+  Reset_data();
+  Data_read();
 
-  while(1)
+  if (_data[0] == '<')
   {
-    if(_Serial_choice == SERIAL_1)
+    if(_data[1] == 'R')
     {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial1.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-    else if(_Serial_choice == SERIAL_2)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial2.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-    else if(_Serial_choice == SERIAL_3)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial3.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-  }
-
-  if (data[0] == '<')
-  {
-    if(data[1] == 'R')
-    {
-      *R_direction = data[2] - 0x30;
+      *R_direction = _data[2] - 0x30;
 
       for (int i = 3; i < 6; i++)
       {
-        if (data[i] == 'L')   break;
+        if (_data[i] == 'L')   break;
 
         switch(i)
         {
-          case 2: *R_PWM = data[3] - 0x30; count = 4; break;
-          case 3: *R_PWM = (data[3] - 0x30) * 10 + (data[4] - 0x30); count = 5; break;
-          case 4: *R_PWM = (data[3] - 0x30) * 100 + (data[4] - 0x30) * 10 + (data[5] - 0x30); count = 6; break;
+          case 2: *R_PWM = _data[3] - 0x30; count = 4; break;
+          case 3: *R_PWM = (_data[3] - 0x30) * 10 + (_data[4] - 0x30); count = 5; break;
+          case 4: *R_PWM = (_data[3] - 0x30) * 100 + (_data[4] - 0x30) * 10 + (_data[5] - 0x30); count = 6; break;
         }
       }
-      if (data[count] == 'L')
+      if (_data[count] == 'L')
       {
         count++;
-        *L_direction = data[count] - 0x30;
+        *L_direction = _data[count] - 0x30;
         count++;
 
         for (int i = count; i < count+3; i++)
         {
-          if (data[i] == '>')   break;
+          if (_data[i] == '>')   break;
           if(i == count)
-            *L_PWM = data[count] - 0x30;
+            *L_PWM = _data[count] - 0x30;
           else if(i == (count+1))
-            *L_PWM = (data[count] - 0x30) * 10 + (data[count+1] - 0x30);
+            *L_PWM = (_data[count] - 0x30) * 10 + (_data[count+1] - 0x30);
           else if(i == (count+2))
-            *L_PWM = (data[count] - 0x30) * 100 + (data[count+1] - 0x30) * 10 + (data[count+2] - 0x30);
+            *L_PWM = (_data[count] - 0x30) * 100 + (_data[count+1] - 0x30) * 10 + (_data[count+2] - 0x30);
         }
       }
       else  return 0;
@@ -418,7 +383,6 @@ int DCDM1210::Answer_PWM(int *R_direction,int *R_PWM,int *L_direction,int *L_PWM
 
 int DCDM1210::Answer_voltage(int *voltage)
 {
-  char data[20];
   int count;
   int input_count=0;
 
@@ -430,68 +394,22 @@ int DCDM1210::Answer_voltage(int *voltage)
 
   // Send_data
   Send_data(_data);
+  Reset_data();
+  Data_read();
 
-  while(1)
+  
+  if (_data[0] == '<')
   {
-    if(_Serial_choice == SERIAL_1)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial1.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-    else if(_Serial_choice == SERIAL_2)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial2.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-    else if(_Serial_choice == SERIAL_3)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial3.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-  }
-
-  if (data[0] == '<')
-  {
-    if(data[1] == 'V')
+    if(_data[1] == 'V')
     {
       for (int i = 2; i < 4; i++)
       {
-        if (data[i] == '>')   break;
+        if (_data[i] == '>')   break;
 
         switch(i)
         {
-          case 2: *voltage = data[2] - 0x30; break;
-          case 3: *voltage = (data[2] - 0x30) * 10 + (data[3] - 0x30); break;
+          case 2: *voltage = _data[2] - 0x30; break;
+          case 3: *voltage = (_data[2] - 0x30) * 10 + (_data[3] - 0x30); break;
         }
       }
     }
@@ -503,7 +421,6 @@ int DCDM1210::Answer_voltage(int *voltage)
 
 int DCDM1210::Answer_current(double *R_current,double *L_current)
 {
-  char data[20];
   char temp[10];
   int count=0;
   int input_count=0;
@@ -517,63 +434,16 @@ int DCDM1210::Answer_current(double *R_current,double *L_current)
 
   // Send_data
   Send_data(_data);
+  Reset_data();
+  Data_read();
 
-  while(1)
+  if (_data[0] == '<')
   {
-    if(_Serial_choice == SERIAL_1)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial1.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-    else if(_Serial_choice == SERIAL_2)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial2.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-    else if(_Serial_choice == SERIAL_3)
-    {
-      if (Serial1.available())
-      {
-        data[input_count] = Serial3.read();
-        if (data[input_count] == '>')
-        {
-          break;
-        }
-        if (data[input_count] == '<')
-        {
-          input_count++;
-        }
-      }
-    }
-  }
-
-  if (data[0] == '<')
-  {
-    if(data[1] == 'R')
+    if(_data[1] == 'R')
     {
       for (int i = 2; i < 7; i++)
       {
-        if (data[i] == 'L')   
+        if (_data[i] == 'L')   
         {
           *R_current = atof(temp);
           for (int j = 0; j < 10; j++)  temp[j] = 0;
@@ -582,17 +452,17 @@ int DCDM1210::Answer_current(double *R_current,double *L_current)
           break;
         }
         else
-          temp[count] = data[i];
+          temp[count] = _data[i];
       }
       for (int i = count; i < count+5; i++)
       {
-        if (data[i] == '>')   
+        if (_data[i] == '>')   
         {
           *L_current = atof(temp);
           break;
         }
         else
-          temp[count] = data[i];
+          temp[count] = _data[i];
       }
     }
   }
@@ -606,5 +476,59 @@ void DCDM1210::Reset_data(void)
   for (int i = 0; i < 20; i++)
   {
     _data[i] = 0;
+  }
+}
+
+void DCDM1210::Data_read(void)
+{
+  int input_count=0;
+  while(1)
+  {
+    if(_Serial_choice == SERIAL_1)
+    {
+      if (Serial1.available())
+      {
+        _data[input_count] = Serial1.read();
+        if (_data[input_count] == '>')
+        {
+          return;
+        }
+        if (_data[0] == '<')
+        {
+          input_count++;
+        }
+      }
+    }
+    else if(_Serial_choice == SERIAL_2)
+    {
+      if (Serial2.available())
+      {
+        _data[input_count] = Serial2.read();
+        if (_data[input_count] == '>')
+        {
+          return;
+        }
+        if (_data[0] == '<')
+        {
+          input_count++;
+        }
+      }
+    }
+    else if(_Serial_choice == SERIAL_3)
+    {
+      if (Serial3.available())
+      {
+        _data[input_count] = Serial3.read();
+
+        if (_data[input_count] == '>')
+        {
+          return;
+        }
+        if (_data[0] == '<')
+        {
+          input_count++;
+        }
+      }
+    }
   }
 }

@@ -8,6 +8,7 @@
 #define DCDM1210_h
 
 #include <HardwareSerial.h>
+#include <usb_serial.h>
 
 // Serial Baud rate define
 #define BAUD_RATE_4800      1
@@ -32,6 +33,9 @@
 class DCDM1210
 {
     public:
+        DCDM1210();
+        ~DCDM1210();
+
         void Serial_connect(int Serial_choice,int baud);
         void Send_data(char *data);
         void Reset_data(void);
@@ -46,10 +50,12 @@ class DCDM1210
         int Answer_PWM(int *R_direction,int *R_PWM,int *L_direction,int *L_PWM);
         int Answer_voltage(int *voltage);
         int Answer_current(double *R_current,double *L_current);
+        void Data_read(void);
 
+    public:
+        char _data[20];
     private:
         int _Serial_choice;
-        char _data[20];
         int _baud;
 
 };
