@@ -10,7 +10,7 @@ RobotSerialComm::RobotSerialComm()
 
 }
     
-int RobotSerialComm::getMsg(unsigned int * argv)
+int RobotSerialComm::getMsg(int * argv)
 {
     int number;
     char data[20];
@@ -31,12 +31,13 @@ int RobotSerialComm::getMsg(unsigned int * argv)
         
         if ( (data[0] == START) && (data[number-1] == END) ) 
         {
-           for (int i = 0; i < number-1; ++i)
+           for (int i = 0; i < number; ++i)
            {
                switch(data[i])
                {
-                    case START:     break;
-                    case SEPARATOR:    
+                    case START:     
+                    break;
+                    case SEPARATOR:   
                         if(first_separator == 0)
                         {
                             action = atoi(temp);  
@@ -54,10 +55,20 @@ int RobotSerialComm::getMsg(unsigned int * argv)
                         
                     break;
                     case END:           
-                        argv[argv_count] = atoi(temp);
-                        return action;
+                        if (first_separator == 1)
+                        {
+                            argv[argv_count] = atoi(temp);
+                            return action;
+                        }
+                        else
+                        {
+                            action = atoi(temp); 
+                            return action;
+                        }
+                        
                     default:
                         temp[temp_count] = data[i];
+                        temp[temp_count+1] = '\0';
                         temp_count++;
                }
            }
@@ -73,18 +84,22 @@ void RobotSerialComm::reply(unsigned int action, unsigned int *argv, int argc)
     char str_param[10]; 
     int i;
     
-    SerialUSB.print(START);
+    SerialUSB.print("@");
     itoa(action,str_param);    
     SerialUSB.print(str_param);
     
     for(i=0 ; i<argc ; i++){       
-      SerialUSB.print(SEPARATOR);
-      itoa(argv[i],str_param);        
-      SerialUSB.print(str_param);
+      SerialUSB.print(",");
+      itoa(argv[i],str_param);     
+      if(argv[i] == 0)  
+        SerialUSB.print("0");
+      else
+        SerialUSB.print(str_param);
     }
-    SerialUSB.println(END);    
+    SerialUSB.println("e");    
 }
-void RobotSerialComm::itoa(unsigned int num, char *str)
+
+void RobotSerialComm::itoa(int num, char *str)
 {
     int i=0; 
     int radix = 10;  // 진수 
@@ -107,5 +122,28 @@ void RobotSerialComm::itoa(unsigned int num, char *str)
     } 
     *(str+i) = '\0';  // 문자열끝널.. 
 } 
+
+int RobotSerialComm::my_atoi(char *pStr){
+    int sign = 1;
+    int nResult = 0;
+    if(pStr == NULL) return 0;
+    
+    if(*pStr == '-'){
+        sign = -1;
+        pStr++;
+    }
+
+    for( ; *pStr != '\0'; pStr++){
+        if(*pStr  < '0' || *pStr > '9'){            
+            return 0;
+        }
+
+        nResult *= 10;
+        nResult += *pStr - '0';        
+    }    
+
+    return nResult * sign;
+}
+
 
 // EOF

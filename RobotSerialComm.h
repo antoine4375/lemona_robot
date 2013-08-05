@@ -1,6 +1,8 @@
 
 #include <usb_serial.h>
-#include <Arduino-compatibles.h>
+#include "math.h"
+#include "delay.h"
+#include <stdlib.h>
 
 #define SERIAL_BUFFER_SIZE  32
 
@@ -49,10 +51,11 @@ class RobotSerialComm
     public:
       RobotSerialComm();
     
-      int getMsg(unsigned int * argv);
+      int getMsg(int * argv);
     
       void reply(unsigned int action, unsigned int * argv, int argc);
-      void itoa(unsigned int action, char *str);
+      void itoa(int action, char *str);
+      int my_atoi(char *pStr);
 };
 
 // EOF

@@ -6,6 +6,7 @@
 
 #include "DCDM1210.h"
 #include "math.h"
+#include "delay.h"
 #include <stdlib.h>
 
 DCDM1210::DCDM1210()
