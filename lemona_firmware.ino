@@ -1,12 +1,10 @@
 #include "DCDM1210.h"
 #include "RobotSerialComm.h"
 
-
-
 int r_count=0;
 int l_count=0;
-int enc1_count=0;
-int enc2_count=0;
+long int enc1_count=0;
+long int enc2_count=0;
 unsigned int number;
 char data[100];
 double t_rv,t_lv;
@@ -37,7 +35,7 @@ double l_desired_velocity = 0; // 목표 속도 설정
 double l_currently_velocity;
 double r_error,r_error_dot,r_previous_error;
 double l_error,l_error_dot,l_previous_error;
-double P=200;
+double P=100;
 double I=50;
 double r_input,l_input;
  
@@ -58,15 +56,15 @@ void sendEncodersReads(){
   
     reply_arg[0] = enc1_count;
     reply_arg[1] = enc2_count;
-    enc2_count = 0;
-    enc1_count = 0;
+    //enc2_count = 0;
+    //enc1_count = 0;
     port.reply(OMNI_READ_ENCODERS, reply_arg, 2);
 }
  
 void setup() {
   //Initialize Serial3
   driver.Serial_connect(SERIAL_3,BAUD_RATE_9600);
-  //Serial3.begin(9600);
+
   SerialUSB.begin();
   pinMode(26,INPUT);
   pinMode(27,INPUT);
@@ -193,31 +191,6 @@ void loop() {
                 break;
    } // switch
    
- /*
-   int number;
-   int line;
-   int ang;
-   number = SerialUSB.available();
-  if(number > 0)
-  {
-    SerialUSB.read(data,number);
-    SerialUSB.print(data);
-      //line = data[3] & 0xff;
-      //ang = data[5] & 0xff;
-
-      //if(data[2])  line = line * (-1.0);
-      //if(data[4])  ang = ang * (-1.0);
-      
-      line = atol(data);
-
-      r_desired_velocity = line + DISTANCE_MOTER / (2 * PI) * ang;
-      r_desired_velocity = r_desired_velocity / 100;
-      
-      l_desired_velocity = line - DISTANCE_MOTER / (2 * PI) * ang;
-      l_desired_velocity = l_desired_velocity / 100;
-  }
-  */
-  
   r_currently_velocity = t_rv;
   r_error = r_desired_velocity-r_currently_velocity;
   r_error_dot = r_error-r_previous_error;
@@ -249,15 +222,7 @@ void loop() {
  
   if(l_input >= 999) l_input = 999;
   if(l_input <= 0) l_input = 0;
- /*
-  Serial3.print("<0L");
-  Serial3.print(r_way);
-  Serial3.println((int)r_input);
-  Serial3.print("R");
-  Serial3.print(l_way);
-  Serial3.println((int)l_input);
-  Serial3.println(">");
-*/
+
   // mistake  L R change
   driver.Moter_control(LEFT, r_way ,(int)r_input,RIGHT, l_way ,(int)l_input);
  
@@ -268,9 +233,10 @@ void loop() {
   r_previous_error = r_error;
   l_previous_error = l_error;
  
-  delay(100);  
+  //delay(1);  
 
   reset_array();
+  
 }
 void reset_array()
 {
@@ -280,55 +246,88 @@ void reset_array()
 }
 void R_intA()
 {
-  enc1_count++;
+  
   if(digitalRead(28))  {
     R_direction = 0;
     r_count++;
+    
+    enc1_count++;
+    
+    if(enc1_count > 32767)
+      enc1_count = 0;
   }
   else                {
     R_direction = 1;
     r_count--;
+    
+    enc1_count--;
+    
+    if(enc1_count < -32767)
+      enc1_count = 0;
   }
 }
 void R_intB()
 {
-  enc1_count++;
+  /*
   if(R_direction)  {
     r_count--;
+    enc1_count--;
+    
+    if(enc1_count < -32767)
+      enc1_count = 0;
   }
   else                {
     r_count++;
+    enc1_count++;
+    
+    if(enc1_count > 32767)
+      enc1_count = 0;
   }
+  */
 }
 void L_intA()
 {
-  enc2_count++;
   if(digitalRead(29))  {
     L_direction = 0;
     l_count--;
+    enc2_count--;
+    
+    if(enc2_count < -32768)
+      enc2_count = 0;
   }
   else                {
     L_direction = 1;
     l_count++;
+    enc2_count++;
+    
+    if(enc2_count > 32767)
+      enc2_count = 0;
   }
  
 }
  
 void L_intB()
 {
-  enc2_count++;
+  /*
   if(L_direction)  {
     l_count++;
+    enc2_count++;
+    if(enc2_count > 32767)
+      enc2_count = 0;
   }
   else                {
     l_count--;
+    enc2_count--;
+    if(enc2_count < -32767)
+      enc2_count = 0;
   }
+  */
 }
  
 void handler_led(void) { 
  
-  t_rv = 0.135 * PI * r_count / 1155 * 100;
-  t_lv = 0.135 * PI * l_count / 1155 * 100;
+  t_rv = 0.135 * PI * r_count / 577.7 * 100;
+  t_lv = 0.135 * PI * l_count / 577.7 * 100;
   r_count = 0;
   l_count = 0;
 }
