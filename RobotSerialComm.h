@@ -1,5 +1,6 @@
 
 #include <usb_serial.h>
+#include <stdio.h>
 #include "math.h"
 #include "delay.h"
 #include <stdlib.h>

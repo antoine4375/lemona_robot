@@ -81,19 +81,18 @@ int RobotSerialComm::getMsg(int * argv)
     
 void RobotSerialComm::reply(unsigned int action, unsigned int *argv, int argc)
 {
-    char str_param[10]; 
+    char str_param[10];
     int i;
+    int ret;
     
     SerialUSB.print("@");
-    itoa(action,str_param);    
+    //itoa(action,str_param); 
+    ret  = sprintf( str_param, "%d", action);   
     SerialUSB.print(str_param);
     
     for(i=0 ; i<argc ; i++){       
       SerialUSB.print(",");
-      itoa(argv[i],str_param);     
-      if(argv[i] == 0)  
-        SerialUSB.print("0");
-      else
+      ret  = sprintf( str_param, "%d", argv[i]);   
         SerialUSB.print(str_param);
     }
     SerialUSB.println("e");    

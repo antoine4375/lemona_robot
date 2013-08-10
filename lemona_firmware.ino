@@ -15,7 +15,7 @@ int L_direction=2;
 #define LED_RATE 10000
 #define LEAD_A 1
 #define LEAD_B 2
-#define DISTANCE_MOTER 12.25    // mm
+#define DISTANCE_MOTER 0.12
 
 #define ROBOT_ID
  
@@ -146,8 +146,8 @@ void loop() {
                 lin_speed_si= ((double)arg[0]/1000); 
                 ang_speed_si= ((double)arg[1]/1000);
 
-                r_desired_velocity = lin_speed_si + DISTANCE_MOTER / (2 * PI) * ang_speed_si;
-                l_desired_velocity = lin_speed_si - DISTANCE_MOTER / (2 * PI) * ang_speed_si;
+                r_desired_velocity = lin_speed_si + /* DISTANCE_MOTER / (2 * PI) * */ ang_speed_si;
+                l_desired_velocity = lin_speed_si - /* DISTANCE_MOTER / (2 * PI) * */ ang_speed_si;
                 break;
 
             case MOVE_POSITIONAL:              //@12,"motor_nr","speed","encoder_Position"e, no reply
