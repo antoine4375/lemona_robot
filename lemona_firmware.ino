@@ -12,12 +12,12 @@ int R_direction=2;
 int L_direction=2;
  
  
-#define LED_RATE 10000
+#define TIME_RATE 50000
 #define LEAD_A 1
 #define LEAD_B 2
-#define DISTANCE_MOTER 0.12
+#define WHEEL_R 0.0675
 
-#define ROBOT_ID
+#define PULSES_TO_M 0.000734045
  
 HardwareTimer timer(2);
 DCDM1210 driver;
@@ -76,13 +76,15 @@ void setup() {
   attachInterrupt(29,L_intB,FALLING);
  
   timer.pause();
-  timer.setPeriod(LED_RATE); // in microseconds
+  timer.setPeriod(TIME_RATE); // in microseconds
   timer.setMode(TIMER_CH1, TIMER_OUTPUT_COMPARE);
   timer.setCompare(TIMER_CH1, 1);
   timer.attachInterrupt(TIMER_CH1, handler_led);
  
   timer.refresh();
   timer.resume();
+
+  pinMode(BOARD_LED_PIN, OUTPUT);
 }
  
 int r_control=0,l_control=0;
@@ -146,8 +148,9 @@ void loop() {
                 lin_speed_si= ((double)arg[0]/1000); 
                 ang_speed_si= ((double)arg[1]/1000);
 
-                r_desired_velocity = lin_speed_si + /* DISTANCE_MOTER / (2 * PI) * */ ang_speed_si;
-                l_desired_velocity = lin_speed_si - /* DISTANCE_MOTER / (2 * PI) * */ ang_speed_si;
+                // the reason for /10 meets a kobuki's ang scale
+                r_desired_velocity = lin_speed_si + ang_speed_si / WHEEL_R / 10;
+                l_desired_velocity = lin_speed_si - ang_speed_si / WHEEL_R / 10;
                 break;
 
             case MOVE_POSITIONAL:              //@12,"motor_nr","speed","encoder_Position"e, no reply
@@ -232,10 +235,11 @@ void loop() {
   //SerialUSB.write(input*0.252525252525);
   r_previous_error = r_error;
   l_previous_error = l_error;
- 
-  //delay(1);  
 
   reset_array();
+  
+  delay(10);
+
   
 }
 void reset_array()
@@ -326,8 +330,9 @@ void L_intB()
  
 void handler_led(void) { 
  
-  t_rv = 0.135 * PI * r_count / 577.7 * 100;
-  t_lv = 0.135 * PI * l_count / 577.7 * 100;
+  t_rv = PULSES_TO_M * r_count * 20;
+  t_lv = PULSES_TO_M * l_count * 20;
+  
   r_count = 0;
   l_count = 0;
 }
